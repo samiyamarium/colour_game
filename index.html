@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Color Fun!</title>
+<style>
+:root{--bg:#fff4d6;--card:#fff;--ink:#3b2f4a;--line:#e8d9b0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#2a2540;--card:#3a3458;--ink:#fff;--line:#554e7a}}
+:root[data-theme="dark"]{--bg:#2a2540;--card:#3a3458;--ink:#fff;--line:#554e7a}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:"Comic Sans MS","Chalkboard SE","Trebuchet MS",sans-serif;padding:10px}
+h1{margin:4px 0 8px;text-align:center;font-size:clamp(20px,5vw,32px)}
+.app{max-width:900px;margin:0 auto;display:flex;gap:10px;align-items:flex-start}
+.board{flex:1;min-width:0;background:var(--card);border:4px solid var(--line);border-radius:18px;padding:8px}
+.wrap{position:relative;width:100%;aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:none;touch-action:none;background:#fff}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+#fg{pointer-events:none}
+#cur{position:absolute;pointer-events:none;display:none;font-size:30px;transform:translate(-4px,-30px);filter:drop-shadow(0 2px 2px #0005)}
+#dot{position:absolute;pointer-events:none;display:none;border-radius:50%;border:2px solid #0006;transform:translate(-50%,-50%)}
+.panel{width:118px;flex:none;background:var(--card);border:4px solid var(--line);border-radius:18px;padding:8px 0 8px 8px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.pencil{display:flex;align-items:center;height:26px;cursor:pointer;transform:translateX(18px);transition:transform .15s;border:0;background:none;padding:0}
+.pencil.on{transform:translateX(0)}
+.pencil .tip{width:0;height:0;border:13px solid transparent;border-right:20px solid #f3d9a8;border-left:0;position:relative}
+.pencil .tip::after{content:"";position:absolute;left:0;top:-6px;border:6px solid transparent;border-right:9px solid var(--c);border-left:0;transform:translateX(-1px)}
+.pencil .body{flex:1;height:22px;background:var(--c);border-radius:0 4px 4px 0;box-shadow:inset 0 -5px 0 #0002}
+.sizes,.btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding-right:8px}
+.btns{flex-direction:column;margin-top:4px}
+button.b{font:inherit;font-size:14px;border:0;border-radius:12px;padding:8px 6px;background:#ff7a59;color:#fff;cursor:pointer;font-weight:bold}
+button.b.alt{background:#4aa8ff}
+button.sz{width:30px;height:30px;border-radius:50%;border:3px solid var(--line);background:var(--card);cursor:pointer;display:grid;place-items:center;padding:0}
+button.sz i{background:var(--ink);border-radius:50%;display:block}
+button.sz.on{border-color:#ff7a59}
+.tip2{text-align:center;font-size:14px;margin-top:6px;opacity:.8}
+.top{max-width:900px;margin:0 auto 8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;font-weight:bold;font-size:15px}
+.top span{background:var(--card);border:3px solid var(--line);border-radius:14px;padding:4px 10px}
+.top .late{background:#ffd6d6;color:#900}
+.ov{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:9;padding:16px}
+.ov[hidden]{display:none}
+.card{background:var(--card);color:var(--ink);border-radius:20px;padding:22px;text-align:center;max-width:420px;width:100%;border:5px solid #ffb703}
+.card input{font:inherit;font-size:20px;padding:10px;border-radius:12px;border:3px solid var(--line);width:100%;text-align:center;margin:8px 0 12px;background:var(--bg);color:var(--ink)}
+.card p{margin:8px 0}
+.cert{border:6px double #c8890a;background:linear-gradient(#fffbea,#ffeeb0);color:#5a3b00}
+.cert .t1{font-size:clamp(22px,6vw,30px);font-weight:bold;margin:6px 0;color:#b5530f}
+.cert .nm{font-size:clamp(28px,8vw,40px);font-weight:bold;margin:8px 0;color:#d6336c;word-break:break-word;border-bottom:3px dashed #c8890a}
+#toast{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:#222c;color:#fff;padding:6px 12px;border-radius:12px;opacity:0;transition:opacity .2s;pointer-events:none;font-size:14px;z-index:2;white-space:nowrap}
+</style>
+</head>
+<body>
+<h1>🎨 Color Fun!</h1>
+<div class="top"><span id="who">👤 Artist</span><span id="timer"></span><span id="prog"></span></div>
+<div class="app">
+  <div class="board">
+    <div class="wrap" id="wrap">
+      <canvas id="bg" width="600" height="600"></canvas>
+      <canvas id="fg" width="600" height="600"></canvas>
+      <div id="toast"></div><div id="dot"></div><div id="cur">✏️</div>
+    </div>
+    <div class="tip2">Pick a pencil on the right, then drag on the picture!</div>
+  </div>
+  <div class="panel">
+    <div id="pencils" style="display:flex;flex-direction:column;gap:6px"></div>
+    <div class="sizes" id="sizes"></div>
+    <div class="btns">
+      <button class="b" id="newBtn">🎲 New picture</button>
+      <button class="b alt" id="clearBtn">🧽 Start over</button>
+    </div>
+  </div>
+</div>
+<div class="ov" id="nameOv"><div class="card"><h2>👋 Hi there!</h2><p>What is your name?</p>
+<input id="nameIn" maxlength="20" placeholder="Type your name" autocomplete="off">
+<button class="b" id="goBtn">Let's color!</button>
+<p style="font-size:14px">Color the whole picture inside the lines in 1 minute and win a certificate! 🏆</p></div></div>
+<div class="ov" id="certOv" hidden><div class="card cert"><div style="font-size:30px">⭐🌟⭐</div>
+<div class="t1">Certificate of Awesomeness</div><div>proudly presented to</div><div class="nm" id="cName"></div>
+<p>for coloring the <b id="cPic"></b> beautifully inside the lines in just <b id="cTime"></b> seconds! 🎉</p>
+<p style="font-size:14px">🏅 Color Fun Academy · <span id="cDate"></span></p>
+<button class="b" id="againBtn">🎲 Color another picture</button></div></div>
+<div class="ov" id="lateOv" hidden><div class="card"><div style="font-size:40px">👏</div><h2 id="lName"></h2>
+<p>You colored the whole picture in <b id="lTime"></b> seconds. Great job! Try to finish in 1 minute to win a certificate!</p>
+<button class="b" id="again2">🎲 Try another picture</button></div></div>
+<script>
+const bg=document.getElementById('bg'),fg=document.getElementById('fg'),wrap=document.getElementById('wrap');
+const b=bg.getContext('2d'),f=fg.getContext('2d');
+const cur=document.getElementById('cur'),dot=document.getElementById('dot');
+const colors=['#e53935','#ff7a00','#ffd600','#7cb342','#2e7d32','#00bcd4','#1e66f5','#8e44ad','#ec407a','#8d5a2b','#222222','#ffffff'];
+const names=['Red','Orange','Yellow','Lime','Green','Cyan','Blue','Purple','Pink','Brown','Black','Eraser'];
+let color=colors[0],size=24,last=null,idx=-1;
+
+const pics=[
+ function house(c){c.rect(150,280,300,230);c.moveTo(120,285);c.lineTo(300,130);c.lineTo(480,285);c.closePath();
+  c.rect(380,160,40,70);c.rect(270,400,60,110);c.rect(185,330,65,60);c.rect(350,330,65,60);c.moveTo(0,510);c.lineTo(600,510);
+  c.moveTo(540,90);c.arc(500,90,40,0,7)},
+ function flower(c){for(let i=0;i<8;i++){const a=i*Math.PI/4;c.moveTo(300+75*Math.cos(a)+48,220+75*Math.sin(a));c.arc(300+75*Math.cos(a),220+75*Math.sin(a),48,0,7)}
+  c.moveTo(340,220);c.arc(300,220,40,0,7);c.rect(291,310,18,200);c.moveTo(291,450);c.quadraticCurveTo(200,380,170,420);c.quadraticCurveTo(220,480,291,450);
+  c.moveTo(309,420);c.quadraticCurveTo(400,350,430,390);c.quadraticCurveTo(380,450,309,420);c.moveTo(0,510);c.lineTo(600,510)},
+ function fish(c){c.ellipse(270,300,170,105,0,0,7);c.moveTo(430,300);c.lineTo(550,210);c.lineTo(550,390);c.closePath();
+  c.moveTo(240,195);c.quadraticCurveTo(280,130,340,200);c.moveTo(184,275);c.arc(170,275,14,0,7);c.moveTo(250,280);c.quadraticCurveTo(290,300,250,335);
+  c.moveTo(130,345);c.quadraticCurveTo(155,360,185,345);for(const [x,y,r] of [[90,200,18],[60,140,12],[110,100,9]]){c.moveTo(x+r,y);c.arc(x,y,r,0,7)}},
+ function rocket(c){c.moveTo(300,60);c.quadraticCurveTo(410,160,390,360);c.lineTo(210,360);c.quadraticCurveTo(190,160,300,60);c.closePath();
+  c.moveTo(344,235);c.arc(300,235,44,0,7);c.moveTo(210,290);c.lineTo(140,400);c.lineTo(210,360);c.moveTo(390,290);c.lineTo(460,400);c.lineTo(390,360);
+  c.moveTo(250,360);c.lineTo(300,500);c.lineTo(350,360);for(const [x,y] of [[80,90],[520,130],[500,300],[100,300]]){c.moveTo(x,y-18);c.lineTo(x+5,y-5);c.lineTo(x+18,y);c.lineTo(x+5,y+5);c.lineTo(x,y+18);c.lineTo(x-5,y+5);c.lineTo(x-18,y);c.lineTo(x-5,y-5);c.closePath()}}
+];
+
+function newPic(){
+  let n;do{n=Math.floor(Math.random()*pics.length)}while(n===idx&&pics.length>1);idx=n;
+  clearPaint();
+  f.clearRect(0,0,600,600);f.beginPath();pics[n](f);
+  f.lineWidth=6;f.strokeStyle='#222';f.lineJoin=f.lineCap='round';f.stroke();label();resetGame();
+}
+function clearPaint(){b.fillStyle='#fff';b.fillRect(0,0,600,600)}
+
+const pc=document.getElementById('pencils');
+colors.forEach((c,i)=>{const e=document.createElement('button');e.className='pencil'+(i?'':' on');e.style.setProperty('--c',c);e.title=names[i];
+  e.innerHTML='<span class="tip"></span><span class="body"></span>';
+  e.onclick=()=>{color=c;document.querySelectorAll('.pencil').forEach(x=>x.classList.remove('on'));e.classList.add('on');upDot()};pc.appendChild(e)});
+const sz=document.getElementById('sizes');
+[12,24,40].forEach((s,i)=>{const e=document.createElement('button');e.className='sz'+(i==1?' on':'');e.title='Pencil size';
+  e.innerHTML='<i style="width:'+(6+i*5)+'px;height:'+(6+i*5)+'px"></i>';
+  e.onclick=()=>{size=s;document.querySelectorAll('.sz').forEach(x=>x.classList.remove('on'));e.classList.add('on');upDot()};sz.appendChild(e)});
+
+function pos(e){const r=wrap.getBoundingClientRect();return{x:(e.clientX-r.left)*600/r.width,y:(e.clientY-r.top)*600/r.height,px:e.clientX-r.left,py:e.clientY-r.top,k:r.width/600}}
+function upDot(){const k=wrap.getBoundingClientRect().width/600;dot.style.width=dot.style.height=size*k+'px';dot.style.background=color+'99'}
+let labels,paintable=[],total=1,active=0,t0=0,tick=null,done=false,player='';
+const N=360000,$=id=>document.getElementById(id),prog=$('prog');
+const tmp=document.createElement('canvas');tmp.width=tmp.height=600;const tc=tmp.getContext('2d');
+const mk=document.createElement('canvas');mk.width=mk.height=600;const mc=mk.getContext('2d');
+function label(){ // find the enclosed areas of the picture
+  const d=f.getImageData(0,0,600,600).data;labels=new Int32Array(N);
+  const L=i=>d[i*4+3]>=40,st=new Int32Array(N);let id=0;paintable=[0];total=0;
+  for(let s=0;s<N;s++){if(labels[s]||L(s))continue;id++;let sp=0,touch=false,cnt=0;st[sp++]=s;labels[s]=id;
+    while(sp){const p=st[--sp];cnt++;const x=p%600,y=(p/600)|0;if(!x||!y||x==599||y==599)touch=true;
+      if(x>0&&!labels[p-1]&&!L(p-1)){labels[p-1]=id;st[sp++]=p-1}
+      if(x<599&&!labels[p+1]&&!L(p+1)){labels[p+1]=id;st[sp++]=p+1}
+      if(y>0&&!labels[p-600]&&!L(p-600)){labels[p-600]=id;st[sp++]=p-600}
+      if(y<599&&!labels[p+600]&&!L(p+600)){labels[p+600]=id;st[sp++]=p+600}}
+    paintable[id]=touch?0:cnt;total+=touch?0:cnt}
+}
+function regionAt(p){const x=Math.round(p.x),y=Math.round(p.y);
+  if(x<0||y<0||x>599||y>599)return 0;const l=labels[y*600+x];if(l)return paintable[l]?l:0;
+  for(let r=1;r<=8;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
+    if(Math.max(Math.abs(dx),Math.abs(dy))!=r)continue;const X=x+dx,Y=y+dy;
+    if(X<0||Y<0||X>599||Y>599)continue;const k=labels[Y*600+X];if(k&&paintable[k])return k}
+  return 0}
+function buildMask(id){const im=mc.createImageData(600,600),a=im.data;
+  for(let i=0;i<N;i++){const l=labels[i];if(l===id||l===0)a[i*4+3]=255}mc.putImageData(im,0,0)}
+function draw(p){tc.globalCompositeOperation='source-over';tc.clearRect(0,0,600,600);
+  tc.strokeStyle=tc.fillStyle=color;tc.lineWidth=size;tc.lineCap=tc.lineJoin='round';tc.beginPath();
+  if(last){tc.moveTo(last.x,last.y);tc.lineTo(p.x,p.y);tc.stroke()}else{tc.arc(p.x,p.y,size/2,0,7);tc.fill()}
+  tc.globalCompositeOperation='destination-in';tc.drawImage(mk,0,0);b.drawImage(tmp,0,0);last=p}
+function coverage(){const d=b.getImageData(0,0,600,600).data;let c=0;
+  for(let i=0;i<N;i++){const l=labels[i];if(l&&paintable[l]){const k=i*4;if(d[k]<250||d[k+1]<250||d[k+2]<250)c++}}return c/total}
+function hint(t){const e=$('toast');e.textContent=t;e.style.opacity=1;clearTimeout(hint.t);hint.t=setTimeout(()=>e.style.opacity=0,1500)}
+function showT(e){const el=$('timer');el.textContent=!t0?'⏱ 60s – starts when you color':e<=60?'⏱ '+(60-Math.floor(e))+'s left':'⏰ Over a minute – keep going!';el.classList.toggle('late',e>60)}
+function setProg(v){prog.textContent='🖍 '+Math.round(v*100)+'% colored'}
+function resetGame(){clearInterval(tick);t0=0;done=false;active=0;showT(0);setProg(0)}
+function startTimer(){if(t0||done)return;t0=Date.now();tick=setInterval(()=>showT((Date.now()-t0)/1000),250)}
+function checkDone(){const v=coverage();setProg(v);if(v<0.9||done)return;done=true;clearInterval(tick);
+  const s=Math.round((Date.now()-t0)/100)/10;
+  if(s<=60){$('cName').textContent=player;$('cPic').textContent=pics[idx].name;$('cTime').textContent=s;
+    $('cDate').textContent=new Date().toLocaleDateString();$('certOv').hidden=false}
+  else{$('lName').textContent='Well done, '+player+'!';$('lTime').textContent=s;$('lateOv').hidden=false}}
+function begin(){const v=$('nameIn').value.trim();if(!v){$('nameIn').focus();return}
+  player=v;$('who').textContent='👤 '+v;$('nameOv').hidden=true}
+$('goBtn').onclick=begin;$('nameIn').addEventListener('keydown',e=>{if(e.key==='Enter')begin()});
+function again(){$('certOv').hidden=$('lateOv').hidden=true;newPic()}
+$('againBtn').onclick=$('again2').onclick=again;
+wrap.addEventListener('pointerdown',e=>{if(done)return;wrap.setPointerCapture(e.pointerId);last=null;const p=pos(e);
+  active=regionAt(p);move(e);if(!active){hint('Start inside a part of the picture! 🙂');return}
+  buildMask(active);startTimer();draw(p)});
+wrap.addEventListener('pointermove',e=>{move(e);if(active&&wrap.hasPointerCapture(e.pointerId))draw(pos(e))});
+wrap.addEventListener('pointerup',()=>{last=null;if(active){active=0;checkDone()}});
+wrap.addEventListener('pointerleave',()=>{cur.style.display=dot.style.display='none'});
+function move(e){const p=pos(e);upDot();cur.style.display=dot.style.display='block';
+  cur.style.left=dot.style.left=p.px+'px';cur.style.top=dot.style.top=p.py+'px'}
+document.getElementById('newBtn').onclick=newPic;
+document.getElementById('clearBtn').onclick=()=>{clearPaint();resetGame()};
+newPic();
+</script>
+</body>
+</html>
