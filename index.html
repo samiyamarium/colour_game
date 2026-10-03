@@ -103,6 +103,44 @@ const pics=[
   c.moveTo(250,360);c.lineTo(300,500);c.lineTo(350,360);for(const [x,y] of [[80,90],[520,130],[500,300],[100,300]]){c.moveTo(x,y-18);c.lineTo(x+5,y-5);c.lineTo(x+18,y);c.lineTo(x+5,y+5);c.lineTo(x,y+18);c.lineTo(x-5,y+5);c.lineTo(x-18,y);c.lineTo(x-5,y-5);c.closePath()}}
 ];
 
+const C=(c,x,y,r)=>{c.moveTo(x+r,y);c.arc(x,y,r,0,7)};
+const E=(c,x,y,a,b,t=0)=>{c.moveTo(x+a*Math.cos(t),y+a*Math.sin(t));c.ellipse(x,y,a,b,t,0,7)};
+const P=(c,...q)=>{c.moveTo(q[0],q[1]);for(let i=2;i<q.length;i+=2)c.lineTo(q[i],q[i+1]);c.closePath()};
+const Ln=(c,a,b,x,y)=>{c.moveTo(a,b);c.lineTo(x,y)};
+const Q=(c,x,y,cx,cy,x2,y2)=>{c.moveTo(x,y);c.quadraticCurveTo(cx,cy,x2,y2)};
+pics.push(
+function sun(c){C(c,300,300,90);for(let i=0;i<12;i++){const a=i*Math.PI/6,d=.13;P(c,300+92*Math.cos(a-d),300+92*Math.sin(a-d),300+195*Math.cos(a),300+195*Math.sin(a),300+92*Math.cos(a+d),300+92*Math.sin(a+d))}
+ C(c,265,280,10);C(c,335,280,10);c.moveTo(348,335);c.arc(300,320,50,.3,Math.PI-.3)},
+function star(c){const t=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?95:230;t.push(300+r*Math.cos(a),315+r*Math.sin(a))}
+ P(c,...t);for(let i=0;i<10;i+=2)Ln(c,300,315,t[i*2],t[i*2+1])},
+function heart(c){c.moveTo(300,500);c.bezierCurveTo(60,330,120,100,300,230);c.bezierCurveTo(480,100,540,330,300,500);c.closePath();Q(c,195,200,160,230,160,290)},
+function butterfly(c){E(c,300,310,16,120);E(c,200,225,110,70,.5);E(c,400,225,110,70,-.5);E(c,215,385,75,50,-.5);E(c,385,385,75,50,.5);
+ C(c,190,215,28);C(c,410,215,28);C(c,220,390,18);C(c,380,390,18);Q(c,300,195,280,130,250,110);Q(c,300,195,320,130,350,110)},
+function cat(c){E(c,300,320,170,150);P(c,140,260,150,100,270,185);P(c,460,260,450,100,330,185);E(c,235,300,24,32);E(c,365,300,24,32);C(c,235,306,10);C(c,365,306,10);
+ P(c,280,350,320,350,300,375);Ln(c,300,375,300,395);Q(c,300,395,270,425,240,395);Q(c,300,395,330,425,360,395);
+ Ln(c,115,335,200,350);Ln(c,115,385,200,370);Ln(c,485,335,400,350);Ln(c,485,385,400,370)},
+function car(c){c.rect(70,300,470,90);P(c,160,300,230,200,400,200,470,300);P(c,185,295,240,222,290,222,290,295);P(c,310,295,310,222,385,222,435,295);
+ C(c,180,400,52);C(c,430,400,52);C(c,180,400,22);C(c,430,400,22);C(c,515,335,14);Ln(c,30,470,570,470)},
+function tree(c){C(c,300,180,90);C(c,210,250,85);C(c,390,250,85);C(c,300,290,80);c.rect(265,330,70,190);C(c,260,205,14);C(c,350,255,14);C(c,220,275,14);Ln(c,80,520,520,520)},
+function sailboat(c){P(c,110,400,490,400,420,490,180,490);c.rect(294,100,12,300);P(c,310,120,310,370,450,370);P(c,290,170,290,370,170,370);P(c,306,70,370,85,306,100);C(c,500,120,45);
+ for(let i=0;i<5;i++)Q(c,60+i*100,525,100+i*100,495,140+i*100,525)},
+function apple(c){c.moveTo(300,170);c.bezierCurveTo(220,110,80,170,90,310);c.bezierCurveTo(100,470,220,520,300,490);c.bezierCurveTo(380,520,500,470,510,310);c.bezierCurveTo(520,170,380,110,300,170);c.closePath();
+ c.moveTo(290,175);c.quadraticCurveTo(290,110,320,70);c.lineTo(345,85);c.quadraticCurveTo(325,120,322,170);c.closePath();
+ c.moveTo(335,110);c.quadraticCurveTo(400,40,470,80);c.quadraticCurveTo(410,150,335,110);Q(c,160,240,140,300,160,360)},
+function icecream(c){P(c,200,300,400,300,300,540);Ln(c,250,300,330,440);Ln(c,350,300,270,440);c.rect(185,290,230,24);E(c,300,265,105,75);C(c,300,170,60);C(c,300,100,22)},
+function balloon(c){E(c,300,230,125,160);P(c,300,395,278,425,322,425);Q(c,300,425,250,470,300,510);Q(c,225,160,200,200,215,250);
+ E(c,480,300,65,85);P(c,480,385,468,405,492,405);Q(c,480,405,455,450,480,500)},
+function umbrella(c){c.moveTo(100,300);c.arc(300,300,200,Math.PI,2*Math.PI);for(let i=0;i<6;i++)c.quadraticCurveTo(467-i*67,340,433-i*67,300);c.closePath();
+ for(const x of [167,233,300,367,433])Ln(c,300,100,x,300);c.rect(294,300,12,190);c.moveTo(300,490);c.arc(275,490,25,0,Math.PI);E(c,100,170,8,14);E(c,500,180,8,14);E(c,150,90,8,14)},
+function snowman(c){C(c,300,430,110);C(c,300,290,80);C(c,300,170,58);c.rect(255,45,90,70);c.rect(230,112,140,16);C(c,280,160,6);C(c,320,160,6);P(c,300,172,350,185,300,192);
+ c.rect(235,222,130,24);C(c,300,280,8);C(c,300,320,8);C(c,300,360,8);Ln(c,225,290,120,230);Ln(c,375,290,480,230)},
+function turtle(c){c.moveTo(120,350);c.arc(300,350,180,Math.PI,0);c.closePath();C(c,300,265,55);Ln(c,300,210,300,170);Ln(c,300,320,300,350);Ln(c,250,285,145,262);Ln(c,350,285,455,262);Ln(c,260,305,200,350);Ln(c,340,305,400,350);
+ C(c,515,335,45);C(c,530,322,6);c.rect(170,350,65,75);c.rect(365,350,65,75);P(c,122,345,65,375,122,380)},
+function duck(c){E(c,280,380,170,110);C(c,395,245,75);P(c,463,235,545,258,463,278);C(c,415,225,10);E(c,240,375,70,45,-.3);P(c,125,345,65,290,170,335);
+ for(let i=0;i<5;i++)Q(c,60+i*100,525,100+i*100,495,140+i*100,525)},
+function cupcake(c){P(c,150,350,450,350,410,520,190,520);Ln(c,205,350,222,520);Ln(c,255,350,258,520);Ln(c,300,350,300,520);Ln(c,345,350,342,520);Ln(c,395,350,378,520);
+ E(c,300,330,165,45);E(c,300,270,125,45);E(c,300,215,80,40);C(c,300,150,25)}
+);
 function newPic(){
   let n;do{n=Math.floor(Math.random()*pics.length)}while(n===idx&&pics.length>1);idx=n;
   clearPaint();
@@ -158,7 +196,7 @@ function resetGame(){clearInterval(tick);t0=0;done=false;active=0;showT(0);setPr
 function startTimer(){if(t0||done)return;t0=Date.now();tick=setInterval(()=>showT((Date.now()-t0)/1000),250)}
 function checkDone(){const v=coverage();setProg(v);if(v<0.9||done)return;done=true;clearInterval(tick);
   const s=Math.round((Date.now()-t0)/100)/10;
-  if(s<=60){$('cName').textContent=player;$('cPic').textContent=pics[idx].name;$('cTime').textContent=s;
+  if(s<=60){$('cName').textContent=player;$('cPic').textContent=pics[idx].name.replace('icecream','ice cream');$('cTime').textContent=s;
     $('cDate').textContent=new Date().toLocaleDateString();$('certOv').hidden=false}
   else{$('lName').textContent='Well done, '+player+'!';$('lTime').textContent=s;$('lateOv').hidden=false}}
 function begin(){const v=$('nameIn').value.trim();if(!v){$('nameIn').focus();return}
