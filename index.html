@@ -31,4 +31,197 @@ button.b{font:inherit;font-size:14px;border:0;border-radius:12px;padding:8px 6px
 button.b.alt{background:#4aa8ff}
 button.sz{width:30px;height:30px;border-radius:50%;border:3px solid var(--line);background:var(--card);cursor:pointer;display:grid;place-items:center;padding:0}
 button.sz i{background:var(--ink);border-radius:50%;display:block}
-button.sz
+button.sz.on{border-color:#ff7a59}
+.tip2{text-align:center;font-size:14px;margin-top:6px;opacity:.8}
+.top{max-width:900px;margin:0 auto 8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;font-weight:bold;font-size:15px}
+.top span{background:var(--card);border:3px solid var(--line);border-radius:14px;padding:4px 10px}
+.top .late{background:#ffd6d6;color:#900}
+.ov{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:9;padding:16px}
+.ov[hidden]{display:none}
+.card{background:var(--card);color:var(--ink);border-radius:20px;padding:22px;text-align:center;max-width:420px;width:100%;border:5px solid #ffb703}
+.card input{font:inherit;font-size:20px;padding:10px;border-radius:12px;border:3px solid var(--line);width:100%;text-align:center;margin:8px 0 12px;background:var(--bg);color:var(--ink)}
+.card p{margin:8px 0}
+.cert{border:6px double #c8890a;background:linear-gradient(#fffbea,#ffeeb0);color:#5a3b00}
+.cert .t1{font-size:clamp(22px,6vw,30px);font-weight:bold;margin:6px 0;color:#b5530f}
+.cert .nm{font-size:clamp(28px,8vw,40px);font-weight:bold;margin:8px 0;color:#d6336c;word-break:break-word;border-bottom:3px dashed #c8890a}
+#toast{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:#222c;color:#fff;padding:6px 12px;border-radius:12px;opacity:0;transition:opacity .2s;pointer-events:none;font-size:14px;z-index:2;white-space:nowrap}
+</style>
+</head>
+<body>
+<h1>🎨 Color Fun!</h1>
+<div class="top"><span id="who">👤 Artist</span><span id="timer"></span><span id="prog"></span></div>
+<div class="app">
+  <div class="board">
+    <div class="wrap" id="wrap">
+      <canvas id="bg" width="600" height="600"></canvas>
+      <canvas id="fg" width="600" height="600"></canvas>
+      <div id="toast"></div><div id="dot"></div><div id="cur">✏️</div>
+    </div>
+    <div class="tip2">Pick a pencil on the right, then drag on the picture!</div>
+  </div>
+  <div class="panel">
+    <div id="pencils" style="display:flex;flex-direction:column;gap:6px"></div>
+    <div class="sizes" id="sizes"></div>
+    <div class="btns">
+      <button class="b" id="newBtn">🎲 New picture</button>
+      <button class="b alt" id="clearBtn">🧽 Start over</button>
+    </div>
+  </div>
+</div>
+<div class="ov" id="nameOv"><div class="card"><h2>👋 Hi there!</h2><p>What is your name?</p>
+<input id="nameIn" maxlength="20" placeholder="Type your name" autocomplete="off">
+<button class="b" id="goBtn">Let's color!</button>
+<p style="font-size:14px">Color the whole picture inside the lines in 1 minute and win a certificate! 🏆</p></div></div>
+<div class="ov" id="certOv" hidden><div class="card cert"><div style="font-size:30px">⭐🌟⭐</div>
+<div class="t1">Certificate of Appreciation</div><div>proudly presented to</div><div class="nm" id="cName"></div>
+<p>for coloring the <b id="cPic"></b> and scoring</p>
+<div class="nm" style="border:0;font-size:clamp(34px,10vw,52px);color:#c2410c;margin:0" id="cScore"></div>
+<div id="cStars" style="font-size:28px"></div><p id="cMsg"></p><p style="font-size:14px" id="cTimeLine"></p>
+<div style="font-family:'Brush Script MT','Segoe Script',cursive;font-size:28px;margin:6px 0">Presented by Samiya ✍️</div>
+<p style="font-size:14px">🏅 Color Fun Academy · <span id="cDate"></span></p>
+<button class="b" id="againBtn">🎲 Color another picture</button></div></div>
+<div class="ov" id="lateOv" hidden><div class="card"><div style="font-size:40px">👏</div><h2 id="lName"></h2>
+<p>You colored the whole picture in <b id="lTime"></b> seconds. Great job! Try to finish in 1 minute to win a certificate!</p>
+<button class="b" id="again2">🎲 Try another picture</button></div></div>
+<script>
+const bg=document.getElementById('bg'),fg=document.getElementById('fg'),wrap=document.getElementById('wrap');
+const b=bg.getContext('2d'),f=fg.getContext('2d');
+const cur=document.getElementById('cur'),dot=document.getElementById('dot');
+const colors=['#e53935','#ff7a00','#ffd600','#7cb342','#2e7d32','#00bcd4','#1e66f5','#8e44ad','#ec407a','#8d5a2b','#222222','#ffffff'];
+const names=['Red','Orange','Yellow','Lime','Green','Cyan','Blue','Purple','Pink','Brown','Black','Eraser'];
+let color=colors[0],size=24,last=null,idx=-1;
+
+const pics=[
+ function house(c){c.rect(150,280,300,230);c.moveTo(120,285);c.lineTo(300,130);c.lineTo(480,285);c.closePath();
+  c.rect(380,160,40,70);c.rect(270,400,60,110);c.rect(185,330,65,60);c.rect(350,330,65,60);c.moveTo(0,510);c.lineTo(600,510);
+  c.moveTo(540,90);c.arc(500,90,40,0,7)},
+ function flower(c){for(let i=0;i<8;i++){const a=i*Math.PI/4;c.moveTo(300+75*Math.cos(a)+48,220+75*Math.sin(a));c.arc(300+75*Math.cos(a),220+75*Math.sin(a),48,0,7)}
+  c.moveTo(340,220);c.arc(300,220,40,0,7);c.rect(291,310,18,200);c.moveTo(291,450);c.quadraticCurveTo(200,380,170,420);c.quadraticCurveTo(220,480,291,450);
+  c.moveTo(309,420);c.quadraticCurveTo(400,350,430,390);c.quadraticCurveTo(380,450,309,420);c.moveTo(0,510);c.lineTo(600,510)},
+ function fish(c){c.ellipse(270,300,170,105,0,0,7);c.moveTo(430,300);c.lineTo(550,210);c.lineTo(550,390);c.closePath();
+  c.moveTo(240,195);c.quadraticCurveTo(280,130,340,200);c.moveTo(184,275);c.arc(170,275,14,0,7);c.moveTo(250,280);c.quadraticCurveTo(290,300,250,335);
+  c.moveTo(130,345);c.quadraticCurveTo(155,360,185,345);for(const [x,y,r] of [[90,200,18],[60,140,12],[110,100,9]]){c.moveTo(x+r,y);c.arc(x,y,r,0,7)}},
+ function rocket(c){c.moveTo(300,60);c.quadraticCurveTo(410,160,390,360);c.lineTo(210,360);c.quadraticCurveTo(190,160,300,60);c.closePath();
+  c.moveTo(344,235);c.arc(300,235,44,0,7);c.moveTo(210,290);c.lineTo(140,400);c.lineTo(210,360);c.moveTo(390,290);c.lineTo(460,400);c.lineTo(390,360);
+  c.moveTo(250,360);c.lineTo(300,500);c.lineTo(350,360);for(const [x,y] of [[80,90],[520,130],[500,300],[100,300]]){c.moveTo(x,y-18);c.lineTo(x+5,y-5);c.lineTo(x+18,y);c.lineTo(x+5,y+5);c.lineTo(x,y+18);c.lineTo(x-5,y+5);c.lineTo(x-18,y);c.lineTo(x-5,y-5);c.closePath()}}
+];
+
+const C=(c,x,y,r)=>{c.moveTo(x+r,y);c.arc(x,y,r,0,7)};
+const E=(c,x,y,a,b,t=0)=>{c.moveTo(x+a*Math.cos(t),y+a*Math.sin(t));c.ellipse(x,y,a,b,t,0,7)};
+const P=(c,...q)=>{c.moveTo(q[0],q[1]);for(let i=2;i<q.length;i+=2)c.lineTo(q[i],q[i+1]);c.closePath()};
+const Ln=(c,a,b,x,y)=>{c.moveTo(a,b);c.lineTo(x,y)};
+const Q=(c,x,y,cx,cy,x2,y2)=>{c.moveTo(x,y);c.quadraticCurveTo(cx,cy,x2,y2)};
+pics.push(
+function sun(c){C(c,300,300,90);for(let i=0;i<12;i++){const a=i*Math.PI/6,d=.13;P(c,300+92*Math.cos(a-d),300+92*Math.sin(a-d),300+195*Math.cos(a),300+195*Math.sin(a),300+92*Math.cos(a+d),300+92*Math.sin(a+d))}
+ C(c,265,280,10);C(c,335,280,10);c.moveTo(348,335);c.arc(300,320,50,.3,Math.PI-.3)},
+function star(c){const t=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?95:230;t.push(300+r*Math.cos(a),315+r*Math.sin(a))}
+ P(c,...t);for(let i=0;i<10;i+=2)Ln(c,300,315,t[i*2],t[i*2+1])},
+function heart(c){c.moveTo(300,500);c.bezierCurveTo(60,330,120,100,300,230);c.bezierCurveTo(480,100,540,330,300,500);c.closePath();Q(c,195,200,160,230,160,290)},
+function butterfly(c){E(c,300,310,16,120);E(c,200,225,110,70,.5);E(c,400,225,110,70,-.5);E(c,215,385,75,50,-.5);E(c,385,385,75,50,.5);
+ C(c,190,215,28);C(c,410,215,28);C(c,220,390,18);C(c,380,390,18);Q(c,300,195,280,130,250,110);Q(c,300,195,320,130,350,110)},
+function cat(c){E(c,300,320,170,150);P(c,140,260,150,100,270,185);P(c,460,260,450,100,330,185);E(c,235,300,24,32);E(c,365,300,24,32);C(c,235,306,10);C(c,365,306,10);
+ P(c,280,350,320,350,300,375);Ln(c,300,375,300,395);Q(c,300,395,270,425,240,395);Q(c,300,395,330,425,360,395);
+ Ln(c,115,335,200,350);Ln(c,115,385,200,370);Ln(c,485,335,400,350);Ln(c,485,385,400,370)},
+function car(c){c.rect(70,300,470,90);P(c,160,300,230,200,400,200,470,300);P(c,185,295,240,222,290,222,290,295);P(c,310,295,310,222,385,222,435,295);
+ C(c,180,400,52);C(c,430,400,52);C(c,180,400,22);C(c,430,400,22);C(c,515,335,14);Ln(c,30,470,570,470)},
+function tree(c){C(c,300,180,90);C(c,210,250,85);C(c,390,250,85);C(c,300,290,80);c.rect(265,330,70,190);C(c,260,205,14);C(c,350,255,14);C(c,220,275,14);Ln(c,80,520,520,520)},
+function sailboat(c){P(c,110,400,490,400,420,490,180,490);c.rect(294,100,12,300);P(c,310,120,310,370,450,370);P(c,290,170,290,370,170,370);P(c,306,70,370,85,306,100);C(c,500,120,45);
+ for(let i=0;i<5;i++)Q(c,60+i*100,525,100+i*100,495,140+i*100,525)},
+function apple(c){c.moveTo(300,170);c.bezierCurveTo(220,110,80,170,90,310);c.bezierCurveTo(100,470,220,520,300,490);c.bezierCurveTo(380,520,500,470,510,310);c.bezierCurveTo(520,170,380,110,300,170);c.closePath();
+ c.moveTo(290,175);c.quadraticCurveTo(290,110,320,70);c.lineTo(345,85);c.quadraticCurveTo(325,120,322,170);c.closePath();
+ c.moveTo(335,110);c.quadraticCurveTo(400,40,470,80);c.quadraticCurveTo(410,150,335,110);Q(c,160,240,140,300,160,360)},
+function icecream(c){P(c,200,300,400,300,300,540);Ln(c,250,300,330,440);Ln(c,350,300,270,440);c.rect(185,290,230,24);E(c,300,265,105,75);C(c,300,170,60);C(c,300,100,22)},
+function balloon(c){E(c,300,230,125,160);P(c,300,395,278,425,322,425);Q(c,300,425,250,470,300,510);Q(c,225,160,200,200,215,250);
+ E(c,480,300,65,85);P(c,480,385,468,405,492,405);Q(c,480,405,455,450,480,500)},
+function umbrella(c){c.moveTo(100,300);c.arc(300,300,200,Math.PI,2*Math.PI);for(let i=0;i<6;i++)c.quadraticCurveTo(467-i*67,340,433-i*67,300);c.closePath();
+ for(const x of [167,233,300,367,433])Ln(c,300,100,x,300);c.rect(294,300,12,190);c.moveTo(300,490);c.arc(275,490,25,0,Math.PI);E(c,100,170,8,14);E(c,500,180,8,14);E(c,150,90,8,14)},
+function snowman(c){C(c,300,430,110);C(c,300,290,80);C(c,300,170,58);c.rect(255,45,90,70);c.rect(230,112,140,16);C(c,280,160,6);C(c,320,160,6);P(c,300,172,350,185,300,192);
+ c.rect(235,222,130,24);C(c,300,280,8);C(c,300,320,8);C(c,300,360,8);Ln(c,225,290,120,230);Ln(c,375,290,480,230)},
+function turtle(c){c.moveTo(120,350);c.arc(300,350,180,Math.PI,0);c.closePath();C(c,300,265,55);Ln(c,300,210,300,170);Ln(c,300,320,300,350);Ln(c,250,285,145,262);Ln(c,350,285,455,262);Ln(c,260,305,200,350);Ln(c,340,305,400,350);
+ C(c,515,335,45);C(c,530,322,6);c.rect(170,350,65,75);c.rect(365,350,65,75);P(c,122,345,65,375,122,380)},
+function duck(c){E(c,280,380,170,110);C(c,395,245,75);P(c,463,235,545,258,463,278);C(c,415,225,10);E(c,240,375,70,45,-.3);P(c,125,345,65,290,170,335);
+ for(let i=0;i<5;i++)Q(c,60+i*100,525,100+i*100,495,140+i*100,525)},
+function cupcake(c){P(c,150,350,450,350,410,520,190,520);Ln(c,205,350,222,520);Ln(c,255,350,258,520);Ln(c,300,350,300,520);Ln(c,345,350,342,520);Ln(c,395,350,378,520);
+ E(c,300,330,165,45);E(c,300,270,125,45);E(c,300,215,80,40);C(c,300,150,25)}
+);
+function newPic(){
+  let n;do{n=Math.floor(Math.random()*pics.length)}while(n===idx&&pics.length>1);idx=n;
+  clearPaint();
+  f.clearRect(0,0,600,600);f.beginPath();pics[n](f);
+  f.lineWidth=6;f.strokeStyle='#222';f.lineJoin=f.lineCap='round';f.stroke();label();resetGame();
+}
+function clearPaint(){b.fillStyle='#fff';b.fillRect(0,0,600,600)}
+
+const pc=document.getElementById('pencils');
+colors.forEach((c,i)=>{const e=document.createElement('button');e.className='pencil'+(i?'':' on');e.style.setProperty('--c',c);e.title=names[i];
+  e.innerHTML='<span class="tip"></span><span class="body"></span>';
+  e.onclick=()=>{color=c;document.querySelectorAll('.pencil').forEach(x=>x.classList.remove('on'));e.classList.add('on');upDot()};pc.appendChild(e)});
+const sz=document.getElementById('sizes');
+[12,24,40].forEach((s,i)=>{const e=document.createElement('button');e.className='sz'+(i==1?' on':'');e.title='Pencil size';
+  e.innerHTML='<i style="width:'+(6+i*5)+'px;height:'+(6+i*5)+'px"></i>';
+  e.onclick=()=>{size=s;document.querySelectorAll('.sz').forEach(x=>x.classList.remove('on'));e.classList.add('on');upDot()};sz.appendChild(e)});
+
+function pos(e){const r=wrap.getBoundingClientRect();return{x:(e.clientX-r.left)*600/r.width,y:(e.clientY-r.top)*600/r.height,px:e.clientX-r.left,py:e.clientY-r.top,k:r.width/600}}
+function upDot(){const k=wrap.getBoundingClientRect().width/600;dot.style.width=dot.style.height=size*k+'px';dot.style.background=color+'99'}
+let labels,paintable=[],total=1,active=0,t0=0,tick=null,done=false,player='';
+const N=360000,$=id=>document.getElementById(id),prog=$('prog');
+const tmp=document.createElement('canvas');tmp.width=tmp.height=600;const tc=tmp.getContext('2d');
+const mk=document.createElement('canvas');mk.width=mk.height=600;const mc=mk.getContext('2d');
+function label(){ // find the enclosed areas of the picture
+  const d=f.getImageData(0,0,600,600).data;labels=new Int32Array(N);
+  const L=i=>d[i*4+3]>=40,st=new Int32Array(N);let id=0;paintable=[0];total=0;
+  for(let s=0;s<N;s++){if(labels[s]||L(s))continue;id++;let sp=0,touch=false,cnt=0;st[sp++]=s;labels[s]=id;
+    while(sp){const p=st[--sp];cnt++;const x=p%600,y=(p/600)|0;if(!x||!y||x==599||y==599)touch=true;
+      if(x>0&&!labels[p-1]&&!L(p-1)){labels[p-1]=id;st[sp++]=p-1}
+      if(x<599&&!labels[p+1]&&!L(p+1)){labels[p+1]=id;st[sp++]=p+1}
+      if(y>0&&!labels[p-600]&&!L(p-600)){labels[p-600]=id;st[sp++]=p-600}
+      if(y<599&&!labels[p+600]&&!L(p+600)){labels[p+600]=id;st[sp++]=p+600}}
+    paintable[id]=touch?0:cnt;total+=touch?0:cnt}
+}
+function regionAt(p){const x=Math.round(p.x),y=Math.round(p.y);
+  if(x<0||y<0||x>599||y>599)return 0;const l=labels[y*600+x];if(l)return paintable[l]?l:0;
+  for(let r=1;r<=8;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
+    if(Math.max(Math.abs(dx),Math.abs(dy))!=r)continue;const X=x+dx,Y=y+dy;
+    if(X<0||Y<0||X>599||Y>599)continue;const k=labels[Y*600+X];if(k&&paintable[k])return k}
+  return 0}
+function buildMask(id){const im=mc.createImageData(600,600),a=im.data;
+  for(let i=0;i<N;i++){const l=labels[i];if(l===id||l===0)a[i*4+3]=255}mc.putImageData(im,0,0)}
+function draw(p){tc.globalCompositeOperation='source-over';tc.clearRect(0,0,600,600);
+  tc.strokeStyle=tc.fillStyle=color;tc.lineWidth=size;tc.lineCap=tc.lineJoin='round';tc.beginPath();
+  if(last){tc.moveTo(last.x,last.y);tc.lineTo(p.x,p.y);tc.stroke()}else{tc.arc(p.x,p.y,size/2,0,7);tc.fill()}
+  tc.globalCompositeOperation='destination-in';tc.drawImage(mk,0,0);b.drawImage(tmp,0,0);last=p}
+function coverage(){const d=b.getImageData(0,0,600,600).data;let c=0;
+  for(let i=0;i<N;i++){const l=labels[i];if(l&&paintable[l]){const k=i*4;if(d[k]<250||d[k+1]<250||d[k+2]<250)c++}}return c/total}
+function hint(t){const e=$('toast');e.textContent=t;e.style.opacity=1;clearTimeout(hint.t);hint.t=setTimeout(()=>e.style.opacity=0,1500)}
+function showT(e){const el=$('timer');el.textContent=!t0?'⏱ 60s – starts when you color':e<=60?'⏱ '+(60-Math.floor(e))+'s left':'⏰ Time is up!';el.classList.toggle('late',e>60)}
+function setProg(v){prog.textContent='🖍 '+Math.round(v*100)+'% colored'}
+function resetGame(){clearInterval(tick);t0=0;done=false;active=0;showT(0);setProg(0)}
+function startTimer(){if(t0||done)return;t0=Date.now();tick=setInterval(()=>{const e=(Date.now()-t0)/1000;if(e>=60)timeUp();else showT(e)},250)}
+function showCert(v,s,early){const pc=Math.round(v*100),st=pc>=90?5:pc>=70?4:pc>=50?3:pc>=25?2:1;
+  const msg=pc>=90?'Amazing work! You colored almost everything!':pc>=70?'Great job! Your picture looks wonderful!':pc>=50?'Nice coloring! Keep practicing and you will be even faster!':'Good try! Next time you can color even more!';
+  $('cName').textContent=player;$('cPic').textContent=pics[idx].name.replace('icecream','ice cream');$('cScore').textContent=pc+'%';
+  $('cStars').textContent='⭐'.repeat(st)+'☆'.repeat(5-st);$('cMsg').textContent=msg;
+  $('cTimeLine').textContent=early?'Finished in '+s+' seconds!':'Time is up after 1 minute!';
+  $('cDate').textContent=new Date().toLocaleDateString();$('certOv').hidden=false}
+function stopGame(){done=true;clearInterval(tick);active=0;last=null}
+function timeUp(){if(done)return;stopGame();showT(61);const v=coverage();setProg(v);showCert(v,60,false)}
+function checkDone(){const v=coverage();setProg(v);if(v<0.9||done)return;stopGame();showCert(v,Math.round((Date.now()-t0)/100)/10,true)}
+function begin(){const v=$('nameIn').value.trim();if(!v){$('nameIn').focus();return}
+  player=v;$('who').textContent='👤 '+v;$('nameOv').hidden=true}
+$('goBtn').onclick=begin;$('nameIn').addEventListener('keydown',e=>{if(e.key==='Enter')begin()});
+function again(){$('certOv').hidden=$('lateOv').hidden=true;newPic()}
+$('againBtn').onclick=$('again2').onclick=again;
+wrap.addEventListener('pointerdown',e=>{if(done)return;wrap.setPointerCapture(e.pointerId);last=null;const p=pos(e);
+  active=regionAt(p);move(e);if(!active){hint('Start inside a part of the picture! 🙂');return}
+  buildMask(active);startTimer();draw(p)});
+wrap.addEventListener('pointermove',e=>{move(e);if(active&&wrap.hasPointerCapture(e.pointerId))draw(pos(e))});
+wrap.addEventListener('pointerup',()=>{last=null;if(active){active=0;checkDone()}});
+wrap.addEventListener('pointerleave',()=>{cur.style.display=dot.style.display='none'});
+function move(e){const p=pos(e);upDot();cur.style.display=dot.style.display='block';
+  cur.style.left=dot.style.left=p.px+'px';cur.style.top=dot.style.top=p.py+'px'}
+document.getElementById('newBtn').onclick=newPic;
+document.getElementById('clearBtn').onclick=()=>{clearPaint();resetGame()};
+newPic();
+</script>
+</body>
+</html>
